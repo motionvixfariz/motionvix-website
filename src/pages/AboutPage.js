@@ -1,12 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FaRocket, FaLightbulb, FaUsers, FaHandshake } from 'react-icons/fa';
 
+// Import your custom hook and components
+import { useMediaQuery } from '../components/useMediaQuery';
+import Counter from '../components/Counter';
+
+// Import your assets
 import ceoImage from '../assets/ceo-photo.jpg'; 
 import cofounderImage from '../assets/lead-dev.png'; 
 
-// --- Placeholder Data ---
+// --- Data ---
 const timelineData = [
   { year: '2022', title: 'The Spark of an Idea', description: 'The journey began with a simple observation: small industries needed better digital tools to compete. The idea for a dedicated, high-quality web solutions provider was born.' },
   { year: '2023', title: 'First Prototype & Founding', description: 'After months of planning and development, the first prototype was built. The company was officially founded by Muhammed Faris and his co-founder, setting the vision in motion.' },
@@ -51,56 +55,69 @@ const HeroSubtitle = styled(motion.p)`
   margin-top: 1rem;
 `;
 
-// --- Timeline Section (Rebuilt with SVG) ---
-const TimelineContainer = styled.div`
+//=========== Interactive Journey Section ===========//
+const JourneyContainer = styled.div`
   position: relative;
   max-width: 800px;
   margin: 0 auto;
 `;
 
-const TimelineSVGContainer = styled.div`
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 100%;
-  width: 50px; /* Wider for easier positioning */
+const JourneyList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8rem;
+  @media (max-width: 768px) { gap: 4rem; }
+`;
+
+const StickyYear = styled.div`
+  position: sticky;
+  top: 150px;
+  width: 200px;
+  font-size: 8rem;
+  font-weight: 900;
+  color: rgba(138, 43, 226, 0.2);
+  text-align: left;
   z-index: 1;
-`;
 
-const TimelineItem = styled(motion.div)`
-  padding: 10px 40px;
-  position: relative;
-  width: 50%;
-  box-sizing: border-box;
-  z-index: 2;
-
-  &:nth-child(odd) { left: 0; text-align: right; }
-  &:nth-child(even) { left: 50%; text-align: left; }
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: #FFFFFF;
-    border: 4px solid #8A2BE2;
-    top: 25px;
-    border-radius: 50%;
-    z-index: 3;
-    transition: transform 0.2s ease-in-out;
+  @media (max-width: 768px) {
+    display: none; // Hide the sticky counter completely on mobile
   }
-  &:hover::after { transform: scale(1.2); }
-  &:nth-child(odd)::after { right: -12px; }
-  &:nth-child(even)::after { left: -12px; }
 `;
 
-const TimelineCard = styled.div`
-  padding: 1.5rem;
-  background-color: #1e1e1e;
-  border-radius: 10px;
-  h3 { margin-top: 0; color: #8A2BE2; }
-  p { color: #BBBBBB; }
+const JourneyItem = styled(motion.div)`
+  position: relative;
+  padding: 2.5rem;
+  background: rgba(30, 30, 30, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  z-index: 2;
+  text-align: left;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+
+  h3 {
+    margin: 0 0 1rem 0;
+    font-size: 2rem;
+    color: #FFFFFF;
+    @media (max-width: 768px) { font-size: 1.5rem; }
+  }
+  p {
+    margin: 0;
+    color: #BBBBBB;
+    line-height: 1.7;
+  }
+`;
+
+const MobileYear = styled.div`
+  display: none;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #8A2BE2;
+  margin-bottom: 0.5rem;
+
+  @media (max-width: 768px) {
+    display: block; // Only show on mobile
+  }
 `;
 
 // --- Leadership Section ---
@@ -128,16 +145,37 @@ const LeaderQuote = styled.blockquote`
     color: #BBBBBB;
 `;
 
-// --- The Main Component ---
-
-export default function AboutPage() {
-  const timelineRef = useRef(null);
+// --- Reusable Child Component for the Journey Item ---
+function JourneyItemWrapper({ item, setFocusedYear, isDesktop }) {
+  const ref = useRef(null);
   const { scrollYProgress } = useScroll({
-    target: timelineRef,
-    // Start when the top of timeline hits the center of the screen, 
-    // end when the bottom of timeline hits the center. This is reliable.
-    offset: ["start center", "end center"],
+    target: ref,
+    offset: ["start end", "end start"]
   });
+
+  const opacity = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [0.4, 1, 0.4]);
+  const scale = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [0.95, 1, 0.95]);
+
+  return (
+    <motion.div
+      ref={ref}
+      // Only trigger the year update if on desktop
+      onViewportEnter={() => isDesktop && setFocusedYear(item.year)}
+    >
+      <JourneyItem style={{ opacity, scale }}>
+        <MobileYear>{item.year}</MobileYear>
+        <h3>{item.title}</h3>
+        <p>{item.description}</p>
+      </JourneyItem>
+    </motion.div>
+  );
+}
+
+
+// --- The Main Component ---
+export default function AboutPage() {
+  const [focusedYear, setFocusedYear] = useState(timelineData[0].year); 
+  const isDesktop = useMediaQuery('(min-width: 768px)'); // This is the responsive check
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -161,49 +199,30 @@ export default function AboutPage() {
         </HeroSubtitle>
       </Section>
 
-      {/* The Journey Section */}
+      {/* The Journey Section - FINAL RESPONSIVE VERSION */}
       <Section>
         <SectionTitle>Our Journey</SectionTitle>
-        <TimelineContainer ref={timelineRef}>
-          <TimelineSVGContainer>
-            <svg width="50" height="100%" viewBox="0 0 50 1200" preserveAspectRatio="none">
-              {/* The background line */}
-              <path d="M 25 0 V 1200" stroke="#333" strokeWidth="4" />
-              {/* The animated foreground line */}
-              <motion.path
-                d="M 25 0 V 1200"
-                stroke="#8A2BE2"
-                strokeWidth="4"
-                style={{ pathLength: scrollYProgress }}
-              />
-              {/* The animated dot */}
-              <motion.circle 
-                cx="25"
-                cy="0"
-                r="11" 
-                fill="#fff" 
-                stroke="#8A2BE2" 
-                strokeWidth="4" 
-                style={{ pathLength: scrollYProgress }} 
-              />
-            </svg>
-          </TimelineSVGContainer>
+        <JourneyContainer>
+          
+          {/* Conditional Rendering: Only show StickyYear if isDesktop is true */}
+          {isDesktop && (
+            <StickyYear>
+              <Counter value={Number(focusedYear)} />
+            </StickyYear>
+          )}
 
-          {timelineData.map((item, index) => (
-            <TimelineItem
-              key={index}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -100 : 100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.8 }}
-            >
-              <TimelineCard>
-                <h3>{item.year} - {item.title}</h3>
-                <p>{item.description}</p>
-              </TimelineCard>
-            </TimelineItem>
-          ))}
-        </TimelineContainer>
+          <JourneyList>
+            {timelineData.map((item, index) => (
+              <JourneyItemWrapper 
+                key={index} 
+                item={item} 
+                setFocusedYear={setFocusedYear}
+                isDesktop={isDesktop} // Pass the boolean down
+              />
+            ))}
+          </JourneyList>
+          
+        </JourneyContainer>
       </Section>
 
       {/* Leadership Section */}
