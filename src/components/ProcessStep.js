@@ -1,3 +1,4 @@
+// src/components/ProcessStep.js
 import React from 'react';
 import styled from 'styled-components';
 import { motion, useTransform } from 'framer-motion';
@@ -8,6 +9,13 @@ const ProcessStepCard = styled(motion.div)`
   border: 1px solid #333;
   border-radius: 15px;
   background: #1e1e1e;
+
+  /* On mobile, we reduce padding and remove the border */
+  @media (max-width: 768px) {
+    padding: 1rem 0 1rem 1rem;
+    border: none;
+    background: none;
+  }
 `;
 
 const StepNumber = styled.div`
@@ -15,6 +23,11 @@ const StepNumber = styled.div`
   font-weight: bold;
   color: #8A2BE2;
   line-height: 1;
+
+  @media (max-width: 768px) {
+    font-size: 2.5rem; /* Slightly smaller number on mobile */
+    display: none; /* Hide the big number, we use the timeline dot instead */
+  }
 `;
 
 const StepContent = styled.div`
@@ -28,18 +41,28 @@ const StepContent = styled.div`
   }
 `;
 
-// This component correctly uses hooks for its animation
+// This component is now responsive
 export default function ProcessStep({ step, index, totalSteps, scrollProgress }) {
-  // Calculate a start and end point for each step's animation
+  // --- This logic is for DESKTOP scrolling animation ---
   const start = index / totalSteps;
   const end = (index + 1) / totalSteps;
-  
-  // Hooks are now correctly used at the top level of this component
   const opacity = useTransform(scrollProgress, [start, (start + end) / 2, end], [0.3, 1, 0.3]);
   const scale = useTransform(scrollProgress, [start, (start + end) / 2, end], [0.9, 1, 0.9]);
 
+  // Use a media query hook or simple CSS to decide which animation to apply.
+  // For simplicity, we'll let CSS handle the layout and Framer Motion handle animation variants for mobile.
+  
+  const isMobile = window.innerWidth <= 768;
+
   return (
-    <ProcessStepCard style={{ opacity, scale }}>
+    <ProcessStepCard
+      // Apply different animations based on screen size
+      style={isMobile ? {} : { opacity, scale }}
+      initial={isMobile ? { opacity: 0, x: 20 } : {}}
+      whileInView={isMobile ? { opacity: 1, x: 0 } : {}}
+      viewport={isMobile ? { once: true, amount: 0.5 } : {}}
+      transition={{ duration: 0.5 }}
+    >
       <StepNumber>{step.number}</StepNumber>
       <StepContent>
         <h3>{step.title}</h3>

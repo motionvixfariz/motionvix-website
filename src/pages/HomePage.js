@@ -495,35 +495,73 @@ const itemVariants = {
 
 //=========== Interactive Process Section (NEW) ===========//
 const ProcessContainer = styled(motion.div)`
+  /* Desktop First: The sticky layout */
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 5rem;
 
+  /* Mobile Styles: Switch to a single column */
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 2rem; /* Reduce gap on mobile */
   }
 `;
 
 const ProcessStickySide = styled.div`
   position: sticky;
-  top: 100px; /* Adjust as needed */
+  top: 100px;
   height: fit-content;
   text-align: left;
+
+  /* On mobile, the sticky text block just becomes a normal header */
+  @media (max-width: 768px) {
+    position: static;
+    text-align: center; /* Center the title on mobile */
+    margin-bottom: 2rem;
+  }
 `;
 
 const ProcessScrollSide = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4rem;
+
+  @media (max-width: 768px) {
+    gap: 0; /* Remove gap, as we'll use padding/margin on items */
+  }
 `;
 
-const ProcessStepCard = styled(motion.div)`
-  text-align: left;
-  padding: 2rem;
-  border: 1px solid #333;
-  border-radius: 15px;
-  background: #1e1e1e;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+// This will now be our main component for each step on both desktop and mobile.
+const ProcessStepWrapper = styled.div`
+  /* On mobile, create the timeline effect */
+  @media (max-width: 768px) {
+    position: relative;
+    padding-left: 50px; /* Space for the line and dot */
+    padding-bottom: 2rem; /* Space between items */
+
+    /* The vertical connecting line */
+    &:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      top: 20px; /* Start below the dot */
+      left: 20px;
+      width: 2px;
+      height: 100%;
+      background-color: #333;
+    }
+
+    /* The dot for each step on the mobile timeline */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background-color: #8A2BE2;
+    }
+  }
 `;
 
 //=========== Project Stats Section (NEW) ===========//
@@ -827,26 +865,28 @@ export default function HomePage() {
         </div>
       </Section>
 
- {/* CORRECTED: Interactive Development Process Section */}
-            <Section ref={processRef}>
-                <ProcessContainer>
-                    <ProcessStickySide>
-                        <SectionTitle style={{ textAlign: 'left', marginBottom: '1rem' }}>Our Approach to Excellence</SectionTitle>
-                        <motion.p style={{ color: '#BBBBBB', textAlign: 'left', fontSize: '1.2rem' }} variants={itemVariants}>We follow a refined, agile process to ensure every project is a masterpiece of strategy, design, and technology.</motion.p>
-                    </ProcessStickySide>
-                    <ProcessScrollSide>
-                        {devProcess.map((step, index) => (
-                            <ProcessStep 
-                                key={index}
-                                step={step}
-                                index={index}
-                                totalSteps={devProcess.length}
-                                scrollProgress={processScroll} // Pass the scroll progress down as a prop
-                            />
-                        ))}
-                    </ProcessScrollSide>
-                </ProcessContainer>
-            </Section>
+ {/* CORRECTED: Interactive & Responsive Development Process Section */}
+      <Section ref={processRef}>
+        <ProcessContainer>
+          <ProcessStickySide>
+            <SectionTitle style={{ textAlign: 'left', marginBottom: '1rem' }}>Our Approach to Excellence</SectionTitle>
+            <motion.p style={{ color: '#BBBBBB', textAlign: 'left', fontSize: '1.2rem' }} variants={itemVariants}>We follow a refined, agile process to ensure every project is a masterpiece of strategy, design, and technology.</motion.p>
+          </ProcessStickySide>
+          <ProcessScrollSide>
+            {devProcess.map((step, index) => (
+              // Add the new wrapper here
+              <ProcessStepWrapper key={index}>
+                <ProcessStep 
+                  step={step}
+                  index={index}
+                  totalSteps={devProcess.length}
+                  scrollProgress={processScroll}
+                />
+              </ProcessStepWrapper>
+            ))}
+          </ProcessScrollSide>
+        </ProcessContainer>
+      </Section>
       
 
 
